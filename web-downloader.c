@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RCVBUFSIZE 100
+#define RCVBUFSIZE 1000000 //assumed max length of an article plus HTML tags
 #define MAX_REQUEST 1000
 
 void die(char *message) {
