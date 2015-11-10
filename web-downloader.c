@@ -85,12 +85,24 @@ int main(int argc, char **argv) {
 	size_t n;
 	
 	//skip over everything before "article-body"
-	while ((n = fread(recBuffer, 1, RCVBUFSIZE, output)) > 0){
+	while (fgets(recBuffer,RCVBUFSIZE, output) > 0){
 		if (strstr(recBuffer, "article-body")) {
-			fwrite(strstr(recBuffer, "article-body"), 1, n, fp);
 			break;
 		}
-	}	
+	}
+
+	//Copy everything between <p> tags
+	char *copyBuffer = malloc(1000000);
+	copyBuffer = strstr(recBuffer, "<p>")+3; //advance past next <p>
+	printf("%s", copyBuffer);
+
+	int i = 0;
+	while (!(copyBuffer[i] == '<' && copyBuffer[i+1] == '/' && copyBuffer[i+2] == 'p' && copyBuffer[i+3] == '>')) {
+		fwrite(copyBuffer+i, 1, 1, fp);
+		i++;
+	}
+	fwrite("\n\n", 2, 2, fp); //put blank line between paragraphs
+
 	/*
 	//copy data from socket to file using recBuffer
 	while ((n=fread(recBuffer, 1, RCVBUFSIZE, output)) > 0) {
@@ -98,10 +110,11 @@ int main(int argc, char **argv) {
 			die("fwrite failed");
 		}
 	}
-	*/
+	
 	if (ferror(output)) {
 		die("fread failed");
 	}
+	*/
 	fclose(output); //close the socket
 	fclose(fp); //close file when done
 		
