@@ -89,6 +89,7 @@ int main(int argc, char **argv) {
 			}
 			copyBuffer = strstr(copyBuffer, ">") + 1; //advance past <p>
 			int i = 0;
+			if (!strstr(copyBuffer, "</p>")) {continue;} //if paragraph doesn't end on same line, skip it
 			while (!(copyBuffer[i] == '<' && copyBuffer[i+1] == '/' && copyBuffer[i+2] == 'p' && copyBuffer[i+3] == '>')) {
 				//skip over any html tags within a paragraph
 				if (copyBuffer[i] == '<') {
@@ -103,8 +104,8 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	fclose(output); //close the socket
-	fclose(fp); //close file when done
+	if (fclose(output) != 0) {die("fclose failed");}; //close the socket
+	if (fclose(fp) != 0) {die("fclose failed");} //close file when done
 		
 	return 0;
 }
