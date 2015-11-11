@@ -75,7 +75,6 @@ int main(int argc, char **argv) {
 	
 	fileName = strrchr(filePath, '/')+1; //Get name from filepath
 	FILE *fp = fopen(fileName, "wb"); //open file for writing
-	size_t n;
 	
 	//Read the rest of the output from the http request
 	while (fgets(recBuffer,RCVBUFSIZE, output) != NULL){
