@@ -73,60 +73,36 @@ int main(int argc, char **argv) {
 		die(recBuffer);
 	}
 	
-	//Skip over rest of header file-- we assume that all lines are under 1000 characters
-	while (strcmp(recBuffer, "\r\n") != 0) {
-		if (!fgets(recBuffer, RCVBUFSIZE, output)) {
-			die("fgets failed");
-		}
-	}
-
 	fileName = strrchr(filePath, '/')+1; //Get name from filepath
 	FILE *fp = fopen(fileName, "wb"); //open file for writing
 	size_t n;
 	
-	//skip over everything not containing actual article
-	while (fgets(recBuffer,RCVBUFSIZE, output) > 0){
-		if (!strstr(recBuffer, "<p>")) {
-			continue;
-		}
-
-		//Copy everything between <p> tags
-		//char *copyBuffer = malloc(1000000);
-		//copyBuffer = strstr(recBuffer, "<p>")+3; //advance past next <p>
+	//Read the rest of the output from the http request
+	while (fgets(recBuffer,RCVBUFSIZE, output) != NULL){
+		if (!strstr(recBuffer, "<p>")) {continue;} //skip over any line not containing a p tag
 		char *copyBuffer = recBuffer;
-		while ((copyBuffer = strstr(copyBuffer, "<p"))) {
+		while ((copyBuffer = strstr(copyBuffer, "<p"))) { //skip to next occurrence of <p
+			//skip over <picture> tags
 			if (copyBuffer[2] == 'i') {
 				copyBuffer++;
-				continue; //skip over <picture> tags
+				continue;
 			}
 			copyBuffer = strstr(copyBuffer, ">") + 1; //advance past <p>
 			int i = 0;
 			while (!(copyBuffer[i] == '<' && copyBuffer[i+1] == '/' && copyBuffer[i+2] == 'p' && copyBuffer[i+3] == '>')) {
-				//skip over any links
+				//skip over any html tags within a paragraph
 				if (copyBuffer[i] == '<') {
 					while (copyBuffer[i] != '>') {i++;}
 					i++;
 					continue;
 				}
-				fwrite(copyBuffer+i, 1, 1, fp);
+				fwrite(copyBuffer+i, 1, 1, fp); //write text between <p> and </p> to file
 				i++;
 			}
 			fwrite("\n\n", 1, 2, fp); //put blank line between paragraphs
 		}
 	}
 	
-	/*
-			//copy data from socket to file using recBuffer
-			while ((n=fread(recBuffer, 1, RCVBUFSIZE, output)) > 0) {
-		if(fwrite(recBuffer, 1, n, fp) != n) {
-			die("fwrite failed");
-		}
-	}
-	
-	if (ferror(output)) {
-		die("fread failed");
-	}
-	*/
 	fclose(output); //close the socket
 	fclose(fp); //close file when done
 		
