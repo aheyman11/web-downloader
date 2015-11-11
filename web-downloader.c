@@ -84,28 +84,40 @@ int main(int argc, char **argv) {
 	FILE *fp = fopen(fileName, "wb"); //open file for writing
 	size_t n;
 	
-	//skip over everything before "article-body"
+	//skip over everything not containing actual article
 	while (fgets(recBuffer,RCVBUFSIZE, output) > 0){
-		if (strstr(recBuffer, "article-body")) {
-			break;
+		if (!strstr(recBuffer, "<p>")) {
+			continue;
+		}
+
+		//Copy everything between <p> tags
+		//char *copyBuffer = malloc(1000000);
+		//copyBuffer = strstr(recBuffer, "<p>")+3; //advance past next <p>
+		char *copyBuffer = recBuffer;
+		while ((copyBuffer = strstr(copyBuffer, "<p"))) {
+			if (copyBuffer[2] == 'i') {
+				copyBuffer++;
+				continue; //skip over <picture> tags
+			}
+			copyBuffer = strstr(copyBuffer, ">") + 1; //advance past <p>
+			int i = 0;
+			while (!(copyBuffer[i] == '<' && copyBuffer[i+1] == '/' && copyBuffer[i+2] == 'p' && copyBuffer[i+3] == '>')) {
+				//skip over any links
+				if (copyBuffer[i] == '<') {
+					while (copyBuffer[i] != '>') {i++;}
+					i++;
+					continue;
+				}
+				fwrite(copyBuffer+i, 1, 1, fp);
+				i++;
+			}
+			fwrite("\n\n", 1, 2, fp); //put blank line between paragraphs
 		}
 	}
-
-	//Copy everything between <p> tags
-	char *copyBuffer = malloc(1000000);
-	copyBuffer = strstr(recBuffer, "<p>")+3; //advance past next <p>
-	printf("%s", copyBuffer);
-
-	int i = 0;
-	while (!(copyBuffer[i] == '<' && copyBuffer[i+1] == '/' && copyBuffer[i+2] == 'p' && copyBuffer[i+3] == '>')) {
-		fwrite(copyBuffer+i, 1, 1, fp);
-		i++;
-	}
-	fwrite("\n\n", 2, 2, fp); //put blank line between paragraphs
-
+	
 	/*
-	//copy data from socket to file using recBuffer
-	while ((n=fread(recBuffer, 1, RCVBUFSIZE, output)) > 0) {
+			//copy data from socket to file using recBuffer
+			while ((n=fread(recBuffer, 1, RCVBUFSIZE, output)) > 0) {
 		if(fwrite(recBuffer, 1, n, fp) != n) {
 			die("fwrite failed");
 		}
