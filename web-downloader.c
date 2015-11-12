@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RCVBUFSIZE 1000000 //assumed max length of an article plus HTML tags
+#define RCVBUFSIZE 1000 //assumed max length of an article plus HTML tags
 #define MAX_REQUEST 1000
 
 void die(char *message) {
@@ -68,10 +68,8 @@ int main(int argc, char **argv) {
 	if (!fgets(recBuffer, RCVBUFSIZE, output)) {
 		die("fgets failed");
 	}
-	//Check that 200 is in the first line
-	if (!strstr(recBuffer, "200")) {
-		die(recBuffer);
-	}
+	
+	if (!strstr(recBuffer, "200")) {die(recBuffer);} //Check that 200 is in the first line
 	
 	fileName = strrchr(filePath, '/')+1; //Get name from filepath
 	FILE *fp = fopen(fileName, "wb"); //open file for writing
@@ -88,12 +86,18 @@ int main(int argc, char **argv) {
 			}
 			copyBuffer = strstr(copyBuffer, ">") + 1; //advance past <p>
 			int i = 0;
-			if (!strstr(copyBuffer, "</p>")) {continue;} //if paragraph doesn't end on same line, skip it
+			//if (!strstr(copyBuffer, "</p>")) {continue;} //if paragraph doesn't end on same line, skip it
 			while (!(copyBuffer[i] == '<' && copyBuffer[i+1] == '/' && copyBuffer[i+2] == 'p' && copyBuffer[i+3] == '>')) {
 				//skip over any html tags within a paragraph
 				if (copyBuffer[i] == '<') {
 					while (copyBuffer[i] != '>') {i++;}
 					i++;
+					continue;
+				}
+				//if line ends before closing paragraph tag, get next line
+				if (i >= strlen(copyBuffer)) {
+					fgets(copyBuffer, RCVBUFSIZE, output);
+					i = 0;
 					continue;
 				}
 				fwrite(copyBuffer+i, 1, 1, fp); //write text between <p> and </p> to file
