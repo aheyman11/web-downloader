@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RCVBUFSIZE 1000 //assumed max length of an article plus HTML tags
+#define RCVBUFSIZE 100000 //assumed max length of an article plus HTML tags
 #define MAX_REQUEST 1000
 
 void die(char *message) {
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 	FILE *fp = fopen(fileName, "wb"); //open file for writing
 	
 	//Read the rest of the output from the http request
-	while (fgets(recBuffer,RCVBUFSIZE, output) != NULL){
+	while (fgets(recBuffer,RCVBUFSIZE-1, output) != NULL){
 		if (!strstr(recBuffer, "<p>")) {continue;} //skip over any line not containing a p tag
 		char *copyBuffer = recBuffer;
 		while ((copyBuffer = strstr(copyBuffer, "<p"))) { //skip to next occurrence of <p
@@ -86,7 +86,6 @@ int main(int argc, char **argv) {
 			}
 			copyBuffer = strstr(copyBuffer, ">") + 1; //advance past <p>
 			int i = 0;
-			//if (!strstr(copyBuffer, "</p>")) {continue;} //if paragraph doesn't end on same line, skip it
 			while (!(copyBuffer[i] == '<' && copyBuffer[i+1] == '/' && copyBuffer[i+2] == 'p' && copyBuffer[i+3] == '>')) {
 				//skip over any html tags within a paragraph
 				if (copyBuffer[i] == '<') {
@@ -96,7 +95,7 @@ int main(int argc, char **argv) {
 				}
 				//if line ends before closing paragraph tag, get next line
 				if (i >= strlen(copyBuffer)) {
-					fgets(copyBuffer, RCVBUFSIZE, output);
+					if(!fgets(copyBuffer, RCVBUFSIZE-1, output)) {break;}
 					i = 0;
 					continue;
 				}
