@@ -18,27 +18,38 @@ void die(char *message) {
 int main(int argc, char **argv) {
 	int sock; //socket descriptor
 	struct sockaddr_in httpServAddr; //server address
-	unsigned short httpServPort; //server port
+	unsigned short httpServPort = 80; //server port, default value of 80
 	char *servIP; //Server IP address (dotted quad)
 	char recBuffer[RCVBUFSIZE]; //buffer to receive data
-	char *filePath;
 	char *fileName;
+	char* filePath;
+	char* serverName;
+	int i;	
 
 	//check for correct number of arguments
-	if (argc != 4) {
-		die("Usage: ./http-client <Host> <Port Number> <File Path>");
+	if (argc != 2) {
+		die("Usage: ./web-downloader <URL>");
 	}
 	
-	httpServPort = atoi(argv[2]); //set server port to that given by user
-	filePath = argv[3];
-
+	if (strstr(argv[1], "//")) {argv[1] = strstr(argv[1], "//") + 2;} //skip over everything before server name
+	filePath = strstr(argv[1], "/"); //set file path to be everything after first / in URL
+	
+	//set serverName to be everything in URL before first /
+	int serverNameLength = 0;
+	while (argv[1][serverNameLength++] != '/') {} //computer length of serverName
+	serverName = (char *) malloc(serverNameLength);
+	for(i = 0; i < serverNameLength-1; i++) {
+		serverName[i] = argv[1][i];
+	}
+	serverName[i] = '\0'; //null terminate
+	
 	//convert host name into IP address
 	struct hostent *he;
-	char *serverName = argv[1];
 	if ((he = gethostbyname(serverName)) == NULL) {
 		die("gethostbyname failed");
 	}
 	servIP = inet_ntoa(*(struct in_addr *)he->h_addr);
+	free(serverName);
 
 	//create a reliable, stream socket using TCP
 	if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
